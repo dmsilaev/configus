@@ -3,7 +3,11 @@ require "configus/version"
 module Configus
   class Builder
 
-    attr_reader :all_env
+    attr_reader :all_env, :default_env
+
+    class << self
+      alias :build :new
+    end
 
     def initialize(default_env, &block)
       @all_env = {}

@@ -14,6 +14,11 @@ class TestConfigus < MiniTest::Test
   end
 
   def test_env
-    assert @builder.all_env == { :development => {}, :production => {} }
+    assert_equal @builder.all_env,
+      { :development => { :a => "bar" }, :production => { :a => "foo" } }
+  end
+
+  def test_configus
+    assert_equal @builder.a, "bar"
   end
 end

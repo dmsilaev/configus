@@ -6,10 +6,10 @@ require 'configus/version'
 Gem::Specification.new do |spec|
   spec.name          = "configus"
   spec.version       = Configus::VERSION
-  spec.authors       = ["TODO: Write your name"]
-  spec.email         = ["TODO: Write your email address"]
-  spec.description   = %q{TODO: Write a gem description}
-  spec.summary       = %q{TODO: Write a gem summary}
+  spec.authors       = ["Dmitry Silaev", "Ainar Garipov"]
+  spec.email         = ["ainar-g@yandex.ru"]
+  spec.description   = %q{configus}
+  spec.summary       = %q{Configus clone}
   spec.homepage      = ""
   spec.license       = "MIT"
 

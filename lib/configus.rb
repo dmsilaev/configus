@@ -12,7 +12,9 @@ module Configus
     def initialize(default_env, &block)
       @all_env = {}
       @present_env = default_env
+      @all_env[@present_env] = {}
       @default_env = default_env
+      @put_to = nil
       instance_eval &block
     end
     
@@ -23,15 +25,18 @@ module Configus
     end
 
     def method_missing(method, *args, &block)
-      # TODO: add super.
-      define_singleton_method(method) do |arg = nil|
-        if arg.nil?
-          @all_env[@default_env][method]
-        else
-          @all_env[@present_env] = { method => arg }
+      if block.nil?
+        define_singleton_method(method) do |arg = nil|
+          if arg.nil?
+            @all_env[@default_env][method]
+          else
+            @all_env[@present_env][method] = arg 
+          end
         end
+        send method, *args
+      else
+        @all_env[@present_env][method] = self.class.new(:_inside, &block)
       end
-      send method, *args
     end
   end
 end

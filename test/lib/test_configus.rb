@@ -4,15 +4,30 @@ class TestConfigus < MiniTest::Test
   def setup
     @builder = Configus::Builder.build :development do
       env :production do
-        a "foo"
+        website_url 'http://example.com'
+        email do
+          pop do
+            address 'pop.example.com'
+            port    110
+          end
+          smtp do
+            address 'smtp.example.com'
+            port    25
+          end
+        end
       end
 
       env :development do
-        a "bar"
-      end
-
-      env :test do
-        a "baz"
+        website_url 'http://text.example.com'
+        email do
+          smtp do
+            address 'smpt.text.example.com'
+          end
+        end
+        full_name do
+          first_name "Bob"
+          last_name "Marley"
+        end
       end
     end
   end
@@ -27,6 +42,14 @@ class TestConfigus < MiniTest::Test
   end
 
   def test_configus
-    assert_equal @builder.a, "bar"
+    assert_equal @builder.website_url, "http://text.example.com"
+  end
+
+  def test_nesting
+    assert_equal @builder.full_name.first_name, "Bob"
+  end
+
+  def test_parent_nesting
+    assert_equal @builder.pop.port, 110
   end
 end

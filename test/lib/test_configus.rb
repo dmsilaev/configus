@@ -1,4 +1,4 @@
-require_relative '../test_helper'
+require 'test_helper'
 
 class TestConfigus < MiniTest::Test
   def setup
@@ -17,7 +17,7 @@ class TestConfigus < MiniTest::Test
         end
       end
 
-      env :development do
+      env :development, :parent => :production do
         website_url 'http://text.example.com'
         email do
           smtp do
@@ -32,11 +32,6 @@ class TestConfigus < MiniTest::Test
     end
   end
 
-  #def test_env
-  #  assert_equal @builder.all_env,
-  #    { :development => { :a => "bar" }, :production => { :a => "foo" } }
-  #end
-
   def test_default_env
     assert_equal @builder.default_env, :development
   end
@@ -50,6 +45,6 @@ class TestConfigus < MiniTest::Test
   end
 
   def test_parent_nesting
-    assert_equal @builder.pop.port, 110
+    assert_equal @builder.email.pop.port, 110
   end
 end

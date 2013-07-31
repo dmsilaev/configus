@@ -21,7 +21,7 @@ class TestConfigus < MiniTest::Test
         website_url 'http://text.example.com'
         email do
           smtp do
-            address 'smpt.text.example.com'
+            address 'smtp.text.example.com'
           end
         end
         full_name do
@@ -46,5 +46,9 @@ class TestConfigus < MiniTest::Test
 
   def test_parent_nesting
     assert_equal @builder.email.pop.port, 110
+  end
+
+  def test_redefine
+    assert_equal @builder.email.smtp.address, 'smtp.text.example.com'
   end
 end

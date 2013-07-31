@@ -30,21 +30,23 @@ module Configus
     end
 
     def method_missing(method, *args, &block)
-      if block.nil?
-        define_singleton_method(method) do |arg = nil|
-          if arg.nil?
-            @envs_hash[@default_env][method]
+      define_singleton_method(method) do |arg = nil, &method_block|
+        if method_block
+          nested_object = @envs_hash[@present_env][method]
+          new_hash_carrier = self.class.new(:_inside, &method_block)
+          if nested_object
+            nested_object_hash = nested_object.envs_hash[:_inside]
+            nested_object_hash.merge! new_hash_carrier.envs_hash[:_inside]
           else
-            @envs_hash[@present_env][method] = arg
+            @envs_hash[@present_env][method] = new_hash_carrier
           end
-        end
-        send method, *args
-      else
-        @envs_hash[@present_env][method] = self.class.new(:_inside, &block)
-        define_singleton_method(method) do
+        elsif arg.nil?
           @envs_hash[@default_env][method]
+        else
+          @envs_hash[@present_env][method] = arg
         end
       end
+      send method, *args, &block
     end
   end
 end

@@ -8,6 +8,9 @@ module Configus
   class BuilderTwiceDefinedEnvironmentError < BuilderError
   end
 
+  class BuilderTwiceDefinedKeyError < BuilderError
+  end
+
   class Builder
     attr_reader :envs_hash, :default_env
 
@@ -51,26 +54,45 @@ module Configus
       node_key = method
       define_singleton_method(method) do |arg = nil, &method_block|
         if method_block
-          this_node = @envs_hash[@present_env][node_key]
-          new_node = self.class.new(:_nested_env, &method_block)
-          if this_node
-            this_hash = this_node.nested_hash
-            new_hash = new_node.nested_hash
-            this_hash.merge! new_hash
-          else
-            @envs_hash[@present_env][node_key] = new_node
-          end
+          get_new_nodes(node_key, method_block)
         elsif arg.nil?
-          @envs_hash[@default_env][node_key]
+          get_default_env_node(node_key)
         else
-          @envs_hash[@present_env][node_key] = arg
+          set_present_env_node(node_key, arg)
         end
       end
       send method, *args, &block
     end
 
+    protected
     def nested_hash
       @envs_hash[:_nested_env]
+    end
+
+    private
+    def get_new_nodes(node_key, block)
+      this_node = get_present_env_node(node_key)
+      new_node = self.class.new(:_nested_env, &block)
+
+      if this_node
+        this_hash = this_node.nested_hash
+        new_hash = new_node.nested_hash
+        this_hash.merge! new_hash
+      else
+        set_present_env_node(node_key, new_node)
+      end
+    end
+
+    def get_default_env_node(node_key)
+      @envs_hash[@default_env][node_key]
+    end
+
+    def get_present_env_node(node_key)
+      @envs_hash[@present_env][node_key]
+    end
+
+    def set_present_env_node(node_key, arg)
+      @envs_hash[@present_env][node_key] = arg
     end
   end
 end

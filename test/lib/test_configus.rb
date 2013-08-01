@@ -104,4 +104,15 @@ class TestConfigus < MiniTest::Test
       end
     end
   end
+
+  def test_twice_defined_key
+    assert_raises(Configus::BuilderTwiceDefinedKeyError) do
+      twice_defined_key = Configus::Builder.build :a do
+        env :a do
+          foo "baz"
+          foo "bar"
+        end
+      end
+    end
+  end
 end

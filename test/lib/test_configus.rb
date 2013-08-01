@@ -51,4 +51,14 @@ class TestConfigus < MiniTest::Test
   def test_redefine
     assert_equal @builder.email.smtp.address, 'smtp.text.example.com'
   end
+
+  def test_arg_error
+    assert_raises(ArgumentError) do
+      broken = Configus::Builder.build :a do
+        env :b do
+          foo "bar"
+        end
+      end
+    end
+  end
 end

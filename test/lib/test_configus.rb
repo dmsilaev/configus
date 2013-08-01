@@ -61,4 +61,47 @@ class TestConfigus < MiniTest::Test
       end
     end
   end
+
+  def test_cycle
+    assert_raises(Configus::BuilderUndefinedEnvironmentError) do
+      cycled = Configus::Builder.build :a do
+        env :a, :parent => :b do
+          foo "baz"
+        end
+
+        env :b, :parent => :a do
+          foo "bar"
+        end
+      end
+    end
+    assert_raises(Configus::BuilderUndefinedEnvironmentError) do
+      cycled = Configus::Builder.build :a do
+        env :b, :parent => :a do
+          foo "bar"
+        end
+
+        env :a, :parent => :b do
+          foo "baz"
+        end
+      end
+    end
+  end
+
+  def test_twice_defined_env
+    assert_raises(Configus::BuilderTwiceDefinedEnvironmentError) do
+      twice_defined = Configus::Builder.build :a do
+        env :a do
+          foo "baz"
+        end
+
+        env :b, :parent => :a do
+          foo "bar"
+        end
+
+        env :b, :parent => :a do
+          foo "quuz"
+        end
+      end
+    end
+  end
 end

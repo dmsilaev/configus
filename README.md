@@ -1,5 +1,7 @@
 # Configus
 
+[![Coverage Status](https://coveralls.io/repos/dmsilaev/configus/badge.png?branch=master)](https://coveralls.io/r/dmsilaev/configus?branch=master)[![Build Status](https://travis-ci.org/dmsilaev/configus.png?branch=master)](https://travis-ci.org/dmsilaev/configus)
+
 TODO: Write a gem description
 
 ## Installation

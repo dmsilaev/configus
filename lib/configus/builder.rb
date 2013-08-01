@@ -44,6 +44,7 @@ module Configus
           raise BuilderUndefinedEnvironmentError
         else
           @envs_hash[new_env] = parent.clone
+          @envs_hash[new_env][:_parent] = parent_key
         end
       end
       @present_env = new_env
@@ -58,7 +59,12 @@ module Configus
         elsif arg.nil?
           get_default_env_node(node_key)
         else
-          set_present_env_node(node_key, arg)
+          parent_node = get_parent_node(node_key)
+          if get_present_env_node(node_key) == parent_node
+            set_present_env_node(node_key, arg)
+          else
+            raise BuilderTwiceDefinedKeyError
+          end
         end
       end
       send method, *args, &block
@@ -72,14 +78,17 @@ module Configus
     private
     def get_new_nodes(node_key, block)
       this_node = get_present_env_node(node_key)
+      parent_node = get_parent_node(node_key)
       new_node = self.class.new(:_nested_env, &block)
 
-      if this_node
+      if this_node.nil?
+        set_present_env_node(node_key, new_node)
+      elsif this_node == parent_node
         this_hash = this_node.nested_hash
         new_hash = new_node.nested_hash
         this_hash.merge! new_hash
       else
-        set_present_env_node(node_key, new_node)
+        raise BuilderTwiceDefinedKeyError
       end
     end
 
@@ -93,6 +102,13 @@ module Configus
 
     def set_present_env_node(node_key, arg)
       @envs_hash[@present_env][node_key] = arg
+    end
+
+    def get_parent_node(node_key)
+      parent_key = get_present_env_node(:_parent)
+      if parent_key
+        @envs_hash[parent_key][node_key]
+      end
     end
   end
 end

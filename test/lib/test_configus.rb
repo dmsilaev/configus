@@ -108,11 +108,30 @@ class TestConfigus < MiniTest::Test
   def test_twice_defined_key
     assert_raises(Configus::BuilderTwiceDefinedKeyError) do
       twice_defined_key = Configus::Builder.build :a do
-        env :a do
+        env :b do
+          foo "quux"
+        end
+
+        env :a, :parent => :b do
           foo "baz"
           foo "bar"
         end
       end
     end
   end
+
+  def test_twice_defined_nested_key
+   assert_raises(Configus::BuilderTwiceDefinedKeyError) do
+    twice_defined_nested_key = Configus::Builder.build :a do
+      env :a do
+        foo do
+          quux "baz"
+        end
+        foo do
+          quux "bar"
+        end
+      end
+    end
+  end
+ end
 end

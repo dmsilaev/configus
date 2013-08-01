@@ -11,6 +11,9 @@ module Configus
   class BuilderTwiceDefinedKeyError < BuilderError
   end
 
+  class BuilderNoKeyError < BuilderError
+  end
+
   class Builder
     attr_reader :envs_hash, :default_env
 
@@ -35,15 +38,13 @@ module Configus
         raise BuilderTwiceDefinedEnvironmentError,
           "Enviroment #{ new_env } is defined twice!"
       end
-      if param_hash.nil?
-        @envs_hash[new_env] = {}
-      else
+      @envs_hash[new_env] = {}
+      if param_hash
         parent_key = param_hash[:parent]
         parent = @envs_hash[parent_key]
         if parent.nil? || parent == {}
           raise BuilderUndefinedEnvironmentError
         else
-          @envs_hash[new_env] = parent.clone
           @envs_hash[new_env][:_parent] = parent_key
         end
       end
@@ -55,12 +56,23 @@ module Configus
       node_key = method
       define_singleton_method(method) do |arg = nil, &method_block|
         if method_block
-          get_new_nodes(node_key, method_block)
+          collect_new_nodes(node_key, method_block)
         elsif arg.nil?
-          get_default_env_node(node_key)
+          this_node = get_default_env_node(node_key)
+          parent_node = get_default_parent_node(node_key)
+          if this_node
+            this_node
+          elsif parent_node
+            parent_node
+          else
+            raise BuilderNoKeyError, "No such key: '#{ node_key }'!"
+          end
         else
+          this_node = get_present_env_node(node_key)
           parent_node = get_parent_node(node_key)
-          if get_present_env_node(node_key) == parent_node
+          if this_node.nil?
+            set_present_env_node(node_key, arg)
+          elsif this_node == parent_node
             set_present_env_node(node_key, arg)
           else
             raise BuilderTwiceDefinedKeyError
@@ -76,14 +88,15 @@ module Configus
     end
 
     private
-    def get_new_nodes(node_key, block)
+    def collect_new_nodes(node_key, block)
       this_node = get_present_env_node(node_key)
       parent_node = get_parent_node(node_key)
       new_node = self.class.new(:_nested_env, &block)
 
-      if this_node.nil?
+      if parent_node.nil? && this_node.nil?
         set_present_env_node(node_key, new_node)
-      elsif this_node == parent_node
+      elsif this_node.nil?
+        this_node = parent_node.clone
         this_hash = this_node.nested_hash
         new_hash = new_node.nested_hash
         this_hash.merge! new_hash
@@ -106,6 +119,13 @@ module Configus
 
     def get_parent_node(node_key)
       parent_key = get_present_env_node(:_parent)
+      if parent_key
+        @envs_hash[parent_key][node_key]
+      end
+    end
+
+    def get_default_parent_node(node_key)
+      parent_key = get_default_env_node(:_parent)
       if parent_key
         @envs_hash[parent_key][node_key]
       end

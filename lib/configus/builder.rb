@@ -1,4 +1,25 @@
 module Configus
+  class Hasher
+    class << self
+      attr_reader :hash
+
+      def build(&block)
+        @hash = {}
+        instance_eval &block
+
+        @hash
+      end
+
+      def method_missing(method, *args, &block)
+        key = method
+        if block_given?
+          @hash[key] = Hasher.build &block
+        else
+          @hash[key], _ = * args
+        end
+      end
+    end
+  end
   class Builder
     # attr_reader :envs_hash, :default_env
 
@@ -11,7 +32,7 @@ module Configus
         @nested_hash = {}
         @current_env = nil
         @default_env = default_env
-        read_envs &block
+        instance_eval &block
         puts @envs_hash[@default_env]
         config = Configus::Config.new(@envs_hash[@default_env])
 
@@ -26,34 +47,18 @@ module Configus
           @envs_hash[@current_env].merge! @envs_hash[parent]
         end
 
-        make_hash &block
-      end
-
-      def make_hash(&block)
-        instance_eval &block
-        # puts @envs_hash[@current_env]
-      end
-
-      def make_nested_hash(&block)
-        instance_eval(&block)
-        @nested_hash
-      end
-
-      def read_envs(&block)
         instance_eval &block
       end
 
       def method_missing(method, *args, &block)
         key = method
+        current_hash = @envs_hash[@current_env]
         if block_given?
-          @nested_hash = {}
-          @envs_hash[@current_env][key] = make_nested_hash(&block)
+          current_hash[key] = Hasher.build &block
         else
-          @nested_hash[key], _ = *args
-          @envs_hash[@current_env][key], _ = *args
+          current_hash[key], _ = *args
         end
       end
-
     end
   end
 end

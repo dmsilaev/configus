@@ -8,9 +8,11 @@ module Configus
       def build(default_env, &block)
         @hash = {}
         @envs_hash = {}
+        @nested_hash = {}
         @current_env = nil
         @default_env = default_env
         read_envs &block
+        puts @envs_hash[@default_env]
         config = Configus::Config.new(@envs_hash[@default_env])
 
         config
@@ -29,10 +31,12 @@ module Configus
 
       def make_hash(&block)
         instance_eval &block
+        # puts @envs_hash[@current_env]
       end
 
-      def make_nested_hash(name, &block)
-        
+      def make_nested_hash(&block)
+        instance_eval(&block)
+        @nested_hash
       end
 
       def read_envs(&block)
@@ -42,8 +46,10 @@ module Configus
       def method_missing(method, *args, &block)
         key = method
         if block_given?
-          @envs_hash[@current_env][key] = make_nested_hash(key, &block)
+          @nested_hash = {}
+          @envs_hash[@current_env][key] = make_nested_hash(&block)
         else
+          @nested_hash[key], _ = *args
           @envs_hash[@current_env][key], _ = *args
         end
       end

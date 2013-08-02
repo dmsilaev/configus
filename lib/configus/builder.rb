@@ -1,39 +1,40 @@
 module Configus
   class Hasher
+    attr_reader :hash
     class << self
-      attr_reader :hash
-
       def build(&block)
-        @hash = {}
-        instance_eval &block
+        hasher = new &block
 
-        @hash
+        hasher.hash
       end
+    end
 
-      def method_missing(method, *args, &block)
-        key = method
-        if block_given?
-          @hash[key] = Hasher.build &block
-        else
-          @hash[key], _ = * args
-        end
+    def initialize(&block)
+      @hash = {}
+
+      instance_eval &block
+    end
+
+    def method_missing(method, *args, &block)
+      if block_given?
+        @hash[method] = Hasher.build &block
+      else
+        @hash[method], _ = * args
       end
     end
   end
+
   class Builder
     # attr_reader :envs_hash, :default_env
 
     class << self
-      attr_reader :default_env, :hash
-
       def build(default_env, &block)
-        @hash = {}
         @envs_hash = {}
-        @nested_hash = {}
         @current_env = nil
+        @current_parent = nil
         @default_env = default_env
         instance_eval &block
-        puts @envs_hash[@default_env]
+        #puts @envs_hash
         config = Configus::Config.new(@envs_hash[@default_env])
 
         config
@@ -44,7 +45,7 @@ module Configus
         @envs_hash[@current_env] = {}
         parent = params[:parent] if params
         if parent 
-          @envs_hash[@current_env].merge! @envs_hash[parent]
+          deep_merge! @envs_hash[@current_env], @envs_hash[parent]
         end
 
         instance_eval &block
@@ -54,9 +55,23 @@ module Configus
         key = method
         current_hash = @envs_hash[@current_env]
         if block_given?
-          current_hash[key] = Hasher.build &block
+          if current_hash[key].nil?
+            current_hash[key] = {}
+          end
+          new_hash = Hasher.build &block
+          deep_merge!(current_hash[key], new_hash)
         else
           current_hash[key], _ = *args
+        end
+      end
+
+      def deep_merge!(hash1, hash2)
+        hash1.merge!(hash2) do |key, oldval, newval|
+          if (oldval.is_a? Hash) && (newval.is_a? Hash)
+            deep_merge!(oldval, newval)
+          else
+            newval
+          end
         end
       end
     end

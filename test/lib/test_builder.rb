@@ -33,7 +33,7 @@ class TestBuilder < MiniTest::Test
     end
   end
 
-  def test_configus
+  def test_key_value
     assert_equal @builder.website_url, "http://text.example.com"
   end
 
@@ -42,12 +42,12 @@ class TestBuilder < MiniTest::Test
   end
 
   def test_parent_nesting
-    assert_equal @builder.server, "nginx"
+    assert_equal @builder.email.pop.port, 110
   end
 
-  # def test_redefine
-  #   assert_equal @builder.email.smtp.address, "smtp.text.example.com"
-  # end
+  def test_redefine
+    assert_equal @builder.email.smtp.address, "smtp.text.example.com"
+  end
 
   # def test_arg_error
   #   assert_raises(ArgumentError) do

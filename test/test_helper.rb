@@ -3,8 +3,6 @@ if ENV['TRAVIS']
       Coveralls.wear!
 end
 
-
 require 'bundler/setup'
 Bundler.require
 require 'minitest/autorun'
-

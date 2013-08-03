@@ -1,25 +1,30 @@
-class Hasher
-  attr_reader :hash
+module Configus
+  class Hasher
+    attr_reader :hash
 
-  class << self
-    def build(&block)
-      hasher = new &block
+    class TwiceDefinedKeyError < RuntimeError; end
 
-      hasher.hash
+    class << self
+      def build(&block)
+        hasher = new &block
+
+        hasher.hash
+      end
     end
-  end
 
-  def initialize(&block)
-    @hash = {}
+    def initialize(&block)
+      @hash = {}
 
-    instance_eval &block
-  end
+      instance_eval &block
+    end
 
-  def method_missing(method, *args, &block)
-    if block_given?
-      @hash[method] = Hasher.build &block
-    else
-      @hash[method], _ = * args
+    def method_missing(method, *args, &block)
+      raise TwiceDefinedKeyError unless @hash[method].nil?
+      if block_given?
+        @hash[method] = Hasher.build &block
+      else
+        @hash[method], _ = * args
+      end
     end
   end
 end

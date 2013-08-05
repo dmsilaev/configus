@@ -18,6 +18,7 @@ module Configus
       instance_eval &block
     end
 
+    private
     def method_missing(method, *args, &block)
       raise TwiceDefinedKeyError unless @hash[method].nil?
       if block_given?

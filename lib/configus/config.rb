@@ -6,6 +6,7 @@ module Configus
       end
     end
 
+    private
     def create_method(method, body)
       define_singleton_method(method) do 
         if body.is_a? Hash
